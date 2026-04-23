@@ -222,7 +222,7 @@
             flex: 1; background: transparent; border: none; outline: none;
             color: var(--text-primary);
             font-family: 'DM Sans', sans-serif;
-            font-size: 16px; /* iOS 줌 방지 */
+            font-size: 16px;
             line-height: 1.4;
             resize: none; height: 26px; max-height: 110px;
             overflow-y: auto;
@@ -231,7 +231,7 @@
         #message::placeholder { color: var(--text-muted); }
 
         #send {
-            width: 40px; height: 40px; /* 44px급 터치 타겟 */
+            width: 40px; height: 40px; 
             border-radius: 50%;
             background: var(--accent); border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
@@ -304,7 +304,7 @@
             autocorrect="off" autocapitalize="none" spellcheck="false"
         />
         <p class="overlay-error" id="nickError"></p>
-        <button class="overlay-btn" id="nickBtn">입장하기</button>
+        <button class="overlay-btn" id="nickBtn">Entering</button>
     </div>
 </div>
 
@@ -320,7 +320,7 @@
     <div id="chat">
         <div class="empty-state" id="emptyState">
             <span style="font-size:22px;opacity:0.25">✦</span>
-            <p>THere's no message yet</p>
+            <p>There's no message yet</p>
             <p>Say hello first!</p>
         </div>
     </div>
@@ -377,7 +377,6 @@
         window.visualViewport.addEventListener('scroll', adjustLayout);
     }
 
-    /* ── 닉네임 설정 ── */
     async function setUsername() {
         const name = nickInput.value.trim();
         if (!name) { nickError.textContent = 'type your name'; return; }
