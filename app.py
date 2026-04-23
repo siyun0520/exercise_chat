@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from flask import Flask, render_template, request, jsonify, session
 from markupsafe import escape
 
@@ -39,11 +39,13 @@ def send_message():
         return jsonify(success=False, error="You can't post an empty message"), 400
 
     text = str(escape(data["message"].strip()))[:500]  # XSS 방지 + 500자 제한
-
+    
+    UTC2 = timezone(timedelta(hours=2))
+    
     message = {
         "username": session["username"],
         "text": text,
-        "timestamp": datetime.utcnow().strftime("%H:%M"),  # UTC 기준 시각
+        "timestamp": datetime.now(UTC2).strftime("%H:%M"),  # UTC+2 
     }
 
     messages.append(message)
