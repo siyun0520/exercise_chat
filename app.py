@@ -48,7 +48,6 @@ def send_message():
 
     messages.append(message)
 
-    # 상한선 초과 시 오래된 메시지부터 제거
     if len(messages) > MAX_MESSAGES:
         del messages[: len(messages) - MAX_MESSAGES]
 

@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Chat</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -10,351 +12,299 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg: #0e0e0f;
-            --surface: #18181b;
-            --surface-2: #232328;
-            --border: rgba(255,255,255,0.07);
-            --border-hover: rgba(255,255,255,0.14);
-            --accent: #c8f35a;
-            --text-primary: #f0efea;
-            --text-secondary: #888880;
-            --text-muted: #4a4a45;
-            --bubble-out: #c8f35a;
+            --bg:              #0e0e0f;
+            --surface:         #18181b;
+            --surface-2:       #232328;
+            --border:          rgba(255,255,255,0.07);
+            --border-hover:    rgba(255,255,255,0.14);
+            --accent:          #c8f35a;
+            --text-primary:    #f0efea;
+            --text-secondary:  #888880;
+            --text-muted:      #4a4a45;
+            --bubble-out:      #c8f35a;
             --bubble-out-text: #1a1f08;
-            --bubble-in: #232328;
-            --bubble-in-text: #f0efea;
+            --bubble-in:       #232328;
+            --danger:          #e24b4a;
+            --sat: env(safe-area-inset-top,    0px);
+            --sab: env(safe-area-inset-bottom, 0px);
         }
+
+        html, body { height: 100%; overflow: hidden; }
 
         body {
             background: var(--bg);
             color: var(--text-primary);
             font-family: 'DM Sans', sans-serif;
-            height: 100dvh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .app {
-            width: 100%;
-            max-width: 680px;
-            height: 100dvh;
+            position: fixed;
+            inset: 0;
             display: flex;
             flex-direction: column;
+            padding-top: var(--sat); 
         }
 
-        /* ── 닉네임 설정 오버레이 ── */
         .overlay {
             position: fixed;
             inset: 0;
-            background: rgba(14,14,15,0.92);
+            background: rgba(14,14,15,0.85);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            backdrop-filter: blur(6px);
+            align-items: flex-end; 
+            z-index: 200;
         }
-
         .overlay.hidden { display: none; }
 
-        .overlay-card {
+        .overlay-sheet {
+            width: 100%;
             background: var(--surface);
-            border: 1px solid var(--border-hover);
-            border-radius: 20px;
-            padding: 36px 32px;
-            width: 320px;
+            border-radius: 20px 20px 0 0;
+            padding: 24px 20px calc(20px + var(--sab));
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 14px;
+            animation: slideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
+        }
+
+        .sheet-handle {
+            width: 36px; height: 4px;
+            background: var(--border-hover);
+            border-radius: 2px;
+            margin: 0 auto 4px;
         }
 
         .overlay-title {
             font-family: 'Instrument Serif', serif;
-            font-size: 22px;
-            font-weight: 400;
-            color: var(--text-primary);
+            font-size: 20px; font-weight: 400;
         }
-
         .overlay-sub {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: -12px;
-            line-height: 1.5;
+            font-size: 13px; color: var(--text-secondary);
+            margin-top: -6px; line-height: 1.5;
         }
-
         .overlay-input {
             background: var(--surface-2);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 16px; 
+            padding: 13px 16px;
             color: var(--text-primary);
             font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            outline: none;
+            outline: none; width: 100%;
             transition: border-color 0.15s;
-            width: 100%;
+            -webkit-appearance: none;
         }
-
         .overlay-input:focus { border-color: var(--border-hover); }
 
         .overlay-btn {
-            background: var(--accent);
-            color: #1a1f08;
-            border: none;
-            border-radius: 10px;
-            padding: 11px;
+            background: var(--accent); color: #1a1f08;
+            border: none; border-radius: 12px;
+            padding: 14px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 15px; font-weight: 500;
             cursor: pointer;
-            transition: opacity 0.15s;
+            transition: opacity 0.1s, transform 0.1s;
+            -webkit-appearance: none;
         }
+        .overlay-btn:active { opacity: 0.8; transform: scale(0.98); }
+        .overlay-error { font-size: 12px; color: var(--danger); min-height: 14px; margin-top: -6px; }
 
-        .overlay-btn:hover { opacity: 0.85; }
-        .overlay-error { font-size: 12px; color: #e24b4a; min-height: 16px; }
-
-        /* ── Header ── */
         .header {
-            padding: 20px 24px 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid var(--border);
             flex-shrink: 0;
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 16px 10px;
+            border-bottom: 1px solid var(--border);
         }
-
         .header-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
+            width: 7px; height: 7px; border-radius: 50%;
             background: var(--accent);
-            box-shadow: 0 0 6px var(--accent);
             animation: pulse 2s ease-in-out infinite;
         }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.35; }
-        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
         .header-title {
             font-family: 'Instrument Serif', serif;
-            font-size: 18px;
-            font-weight: 400;
-            color: var(--text-primary);
+            font-size: 17px; font-weight: 400;
         }
-
-        .header-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .header-right { margin-left: auto; }
 
         .nick-badge {
             font-family: 'DM Mono', monospace;
-            font-size: 11px;
-            color: var(--accent);
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            padding: 4px 8px;
+            font-size: 11px; color: var(--accent);
+            letter-spacing: 0.04em;
+            display: inline-block;
+            padding: 8px 10px; margin: -4px;
             border: 1px solid rgba(200,243,90,0.2);
-            border-radius: 6px;
-            transition: border-color 0.15s;
+            border-radius: 8px; cursor: pointer;
+            max-width: 110px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
 
-        .nick-badge:hover { border-color: rgba(200,243,90,0.5); }
-
-        .status-tag {
-            font-family: 'DM Mono', monospace;
-            font-size: 11px;
-            color: var(--text-muted);
-            letter-spacing: 0.06em;
-        }
-
-        /* ── Chat ── */
         #chat {
             flex: 1;
-            overflow-y: auto;
-            padding: 20px 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            overflow-y: auto; overflow-x: hidden;
+            padding: 12px 14px 6px;
+            display: flex; flex-direction: column; gap: 4px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
             scroll-behavior: smooth;
         }
-
-        #chat::-webkit-scrollbar { width: 4px; }
-        #chat::-webkit-scrollbar-track { background: transparent; }
-        #chat::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+        #chat::-webkit-scrollbar { display: none; }
 
         .empty-state {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            color: var(--text-muted);
-            font-size: 13px;
-            letter-spacing: 0.03em;
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 6px; color: var(--text-muted); font-size: 13px;
         }
 
-        /* 날짜/시간 구분선 */
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0 4px;
-            font-family: 'DM Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
-        }
-
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        /* 말풍선 */
         .msg-wrapper {
             display: flex;
-            animation: fadeUp 0.18s ease;
+            animation: fadeUp 0.15s ease;
         }
-
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(5px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from { opacity:0; transform:translateY(4px); }
+            to   { opacity:1; transform:translateY(0); }
         }
-
         .msg-wrapper.outgoing { justify-content: flex-end; }
         .msg-wrapper.incoming { justify-content: flex-start; }
 
         .msg-col {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            max-width: 72%;
+            display: flex; flex-direction: column; gap: 2px;
+            max-width: 82%; 
         }
-
         .msg-wrapper.outgoing .msg-col { align-items: flex-end; }
         .msg-wrapper.incoming .msg-col { align-items: flex-start; }
 
         .nick {
             font-family: 'DM Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            letter-spacing: 0.04em;
-            padding: 0 4px;
+            font-size: 10px; color: var(--text-muted); padding: 0 4px;
         }
-
         .bubble {
-            padding: 9px 13px;
-            border-radius: 16px;
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 15px;
+            line-height: 1.55;
+            padding: 10px 14px;
+            border-radius: 18px;
             word-break: break-word;
+            overflow-wrap: anywhere;
         }
-
         .bubble.out {
-            background: var(--bubble-out);
-            color: var(--bubble-out-text);
-            border-bottom-right-radius: 4px;
-            font-weight: 500;
+            background: var(--bubble-out); color: var(--bubble-out-text);
+            border-bottom-right-radius: 4px; font-weight: 500;
         }
-
         .bubble.in {
-            background: var(--bubble-in);
-            color: var(--bubble-in-text);
+            background: var(--bubble-in); color: var(--text-primary);
             border: 1px solid var(--border);
             border-bottom-left-radius: 4px;
         }
-
         .ts {
             font-family: 'DM Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            padding: 0 4px;
+            font-size: 10px; color: var(--text-muted); padding: 0 4px;
         }
 
-        /* ── Input ── */
         .input-area {
-            padding: 14px 24px 20px;
-            border-top: 1px solid var(--border);
             flex-shrink: 0;
+            padding: 8px 12px calc(8px + var(--sab));
+            border-top: 1px solid var(--border);
+            background: var(--bg);
         }
-
         .input-row {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
+            display: flex; align-items: flex-end; gap: 8px;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 10px 10px 10px 16px;
-            transition: border-color 0.15s;
+            border-radius: 22px;
+            padding: 8px 8px 8px 16px;
         }
-
-        .input-row:focus-within { border-color: var(--border-hover); }
-
         #message {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
+            flex: 1; background: transparent; border: none; outline: none;
             color: var(--text-primary);
             font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            line-height: 1.5;
-            resize: none;
-            height: 22px;
-            max-height: 120px;
+            font-size: 16px; /* iOS 줌 방지 */
+            line-height: 1.4;
+            resize: none; height: 26px; max-height: 110px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
-
         #message::placeholder { color: var(--text-muted); }
 
         #send {
-            width: 36px; height: 36px;
-            border-radius: 10px;
-            background: var(--accent);
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 40px; height: 40px; /* 44px급 터치 타겟 */
+            border-radius: 50%;
+            background: var(--accent); border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
-            transition: opacity 0.15s, transform 0.1s;
+            transition: opacity 0.1s, transform 0.1s;
+            -webkit-appearance: none;
         }
+        #send:active { opacity: 0.75; transform: scale(0.9); }
+        #send svg { width: 17px; height: 17px; fill: #1a1f08; }
 
-        #send:hover { opacity: 0.85; }
-        #send:active { transform: scale(0.94); }
-        #send svg { width: 16px; height: 16px; fill: #1a1f08; }
+        @media (min-width: 769px) {
+            body {
+                display: flex; align-items: center; justify-content: center;
+                background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0);
+                background-size: 28px 28px;
+            }
+            .app {
+                position: relative; inset: auto;
+                width: 460px;
+                height: 88dvh; max-height: 820px;
+                border: 1px solid var(--border);
+                border-radius: 24px; overflow: hidden;
+                padding-top: 0;
+            }
+            .overlay { align-items: center; justify-content: center; }
+            .overlay-sheet {
+                width: 360px; border-radius: 20px;
+                padding: 32px 28px;
+                animation: fadeScale 0.2s ease;
+            }
+            @keyframes fadeScale {
+                from { opacity:0; transform:scale(0.96); }
+                to   { opacity:1; transform:scale(1); }
+            }
+            .sheet-handle { display: none; }
 
-        .char-count {
-            font-family: 'DM Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            text-align: right;
-            margin-top: 6px;
-            padding: 0 4px;
+            .header { padding: 16px 20px 14px; }
+            #chat {
+                padding: 16px 20px 8px;
+                overflow-y: auto;
+            }
+            #chat::-webkit-scrollbar { display: block; width: 4px; }
+            #chat::-webkit-scrollbar-track { background: transparent; }
+            #chat::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+            .msg-col { max-width: 72%; }
+            .bubble { font-size: 14px; }
+            .input-area { padding: 10px 16px 14px; }
+            #send { border-radius: 12px; }
+            .nick-badge:hover { border-color: rgba(200,243,90,0.5); }
         }
-
-        .char-count.warn { color: #e24b4a; }
+        @media (min-width: 1280px) {
+            .app { width: 520px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="overlay" id="overlay">
-    <div class="overlay-card">
+    <div class="overlay-sheet">
+        <div class="sheet-handle"></div>
         <div>
             <p class="overlay-title">Setting name</p>
-            <p class="overlay-sub">Type your name!</p>
+            <p class="overlay-sub">Write your name</p>
         </div>
-        <input class="overlay-input" id="nickInput" type="text" placeholder="ex) siyun" maxlength="20" autocomplete="off" />
+        <input
+            class="overlay-input" id="nickInput"
+            type="text" placeholder="ex) siyun"
+            maxlength="20" autocomplete="off"
+            autocorrect="off" autocapitalize="none" spellcheck="false"
+        />
         <p class="overlay-error" id="nickError"></p>
-        <button class="overlay-btn" id="nickBtn">Enter</button>
+        <button class="overlay-btn" id="nickBtn">입장하기</button>
     </div>
 </div>
 
@@ -363,71 +313,89 @@
         <div class="header-dot"></div>
         <h1 class="header-title">Chat</h1>
         <div class="header-right">
-            <span class="nick-badge" id="nickDisplay" title="click to change name"></span>
-            <span class="status-tag" id="statusTag">LIVE</span>
+            <span class="nick-badge" id="nickDisplay" title="tap to change name"></span>
         </div>
     </header>
 
     <div id="chat">
         <div class="empty-state" id="emptyState">
-            <span style="font-size:24px;opacity:0.3">✦</span>
-            <p>There's no message yet</p>
+            <span style="font-size:22px;opacity:0.25">✦</span>
+            <p>THere's no message yet</p>
             <p>Say hello first!</p>
         </div>
     </div>
 
     <div class="input-area">
         <div class="input-row">
-            <textarea id="message" placeholder="write your message..." rows="1" maxlength="500"></textarea>
+            <textarea
+                id="message"
+                placeholder="type your message..."
+                rows="1" maxlength="500"
+                autocorrect="off" autocapitalize="none" spellcheck="false"
+            ></textarea>
             <button id="send" title="send">
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
                 </svg>
             </button>
         </div>
-        <div class="char-count"><span id="charCount">0</span> / 500</div>
     </div>
 </div>
 
 <script>
-    let myUsername = null;
-    let totalFetched = 0;        // 마지막으로 받은 total 카운트 (delta polling)
-    let renderedCount = 0;       // 화면에 렌더링된 메시지 수
+    let myUsername    = null;
+    let renderedCount = 0;
 
     const overlay    = document.getElementById('overlay');
     const nickInput  = document.getElementById('nickInput');
     const nickBtn    = document.getElementById('nickBtn');
     const nickError  = document.getElementById('nickError');
     const nickDisplay= document.getElementById('nickDisplay');
-    const statusTag  = document.getElementById('statusTag');
     const chatDiv    = document.getElementById('chat');
     const emptyState = document.getElementById('emptyState');
     const msgInput   = document.getElementById('message');
     const sendBtn    = document.getElementById('send');
-    const charCount  = document.getElementById('charCount');
+    const appEl      = document.querySelector('.app');
+
+    function adjustLayout() {
+        if (!window.visualViewport) return;
+        const mobile = window.innerWidth < 769;
+        if (mobile) {
+            appEl.style.height = window.visualViewport.height + 'px';
+            appEl.style.top    = window.visualViewport.offsetTop + 'px';
+        } else {
+            appEl.style.height = '';
+            appEl.style.top    = '';
+        }
+    }
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            adjustLayout();
+            requestAnimationFrame(() => { chatDiv.scrollTop = chatDiv.scrollHeight; });
+        });
+        window.visualViewport.addEventListener('scroll', adjustLayout);
+    }
 
     /* ── 닉네임 설정 ── */
     async function setUsername() {
         const name = nickInput.value.trim();
-        if (!name) { nickError.textContent = 'Type your name!'; return; }
+        if (!name) { nickError.textContent = 'type your name'; return; }
 
-        const res = await fetch('/set_username', {
+        const res  = await fetch('/set_username', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: name })
         });
         const data = await res.json();
 
-        if (!res.ok) {
-            nickError.textContent = data.error || 'Sorry, An error has occurred';
-            return;
-        }
+        if (!res.ok) { nickError.textContent = data.error || 'There is an system error'; return; }
 
         myUsername = data.username;
         nickDisplay.textContent = myUsername;
         overlay.classList.add('hidden');
-        msgInput.focus();
         startPolling();
+        setTimeout(() => msgInput.focus(), 150);
     }
 
     nickBtn.addEventListener('click', setUsername);
@@ -437,7 +405,7 @@
         nickInput.value = myUsername || '';
         nickError.textContent = '';
         overlay.classList.remove('hidden');
-        nickInput.focus();
+        setTimeout(() => nickInput.focus(), 100);
     });
 
     function appendMessage(msg) {
@@ -469,25 +437,18 @@
         wrapper.appendChild(col);
         chatDiv.appendChild(wrapper);
     }
+
     async function fetchMessages() {
         try {
-            const res = await fetch(`/messages?after=${renderedCount}`);
+            const res  = await fetch(`/messages?after=${renderedCount}`);
             const data = await res.json();
-            statusTag.textContent = 'LIVE';
-
-            const newMsgs = data.messages;
-            if (newMsgs.length === 0) return;
-
-            if (renderedCount === 0) {
-                emptyState.style.display = 'none';
-            }
-
-            newMsgs.forEach(appendMessage);
-            renderedCount += newMsgs.length;
-
+            if (!data.messages.length) return;
+            if (renderedCount === 0) emptyState.style.display = 'none';
+            data.messages.forEach(appendMessage);
+            renderedCount += data.messages.length;
             chatDiv.scrollTop = chatDiv.scrollHeight;
-        } catch {
-            statusTag.textContent = 'OFFLINE';
+        } catch { 
+
         }
     }
 
@@ -495,11 +456,12 @@
         fetchMessages();
         setInterval(fetchMessages, 1500);
     }
+
     async function sendMessage() {
         const text = msgInput.value.trim();
         if (!text || !myUsername) return;
 
-        const res = await fetch('/send', {
+        const res  = await fetch('/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: text })
@@ -508,9 +470,7 @@
 
         if (res.ok) {
             msgInput.value = '';
-            msgInput.style.height = '22px';
-            charCount.textContent = '0';
-            charCount.classList.remove('warn');
+            msgInput.style.height = '26px';
             if (emptyState.style.display !== 'none') emptyState.style.display = 'none';
             appendMessage(data.message);
             renderedCount += 1;
@@ -519,16 +479,21 @@
     }
 
     sendBtn.addEventListener('click', sendMessage);
+
     msgInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        if (e.key === 'Enter' && !e.shiftKey && window.innerWidth >= 769) {
+            e.preventDefault();
+            sendMessage();
+        }
     });
 
     msgInput.addEventListener('input', () => {
-        msgInput.style.height = '22px';
-        msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
-        const len = msgInput.value.length;
-        charCount.textContent = len;
-        charCount.classList.toggle('warn', len >= 450);
+        msgInput.style.height = '26px';
+        msgInput.style.height = Math.min(msgInput.scrollHeight, 110) + 'px';
+    });
+
+    msgInput.addEventListener('focus', () => {
+        setTimeout(() => { chatDiv.scrollTop = chatDiv.scrollHeight; }, 350);
     });
 </script>
 </body>
