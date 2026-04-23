@@ -1,80 +1,535 @@
 <!DOCTYPE html>
- <html lang="en">
- <head>
-     <!-- Character encoding and viewport setting -->
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-     <title>Simple Chat Service</title>
-     <style>
-         /* Basic styling for the body element, 
-         chat display area and message input field */
-         body {
-             font-family: Arial, sans-serif; 
-         }
-     /* Here we are styling the document element with id 'chat'. The hashtag is the id selector.
-         #chat {
-             border: 1px solid #ccc; 
-             padding: 10px; 
-             height: 300px; 
-             overflow-y: scroll; /* Enable vertical scrolling for overflow text */
-             margin-bottom: 10px; 
-         }
-     /* Similar to the above, we are styling the document element with id 'message'. 
-         #message {
-             width: 80%; 
-         }
-     </style>
- </head>
- <body>
-     <h1>Chat Service</h1>
-     <!-- Div element to display chat messages -->
-     <div id="chat"></div>
-     <!-- Input field for users to type messages -->
-     <input type="text" id="message" placeholder="Type a message..." />
-     <button id="send">Send</button>
+        :root {
+            --bg: #0e0e0f;
+            --surface: #18181b;
+            --surface-2: #232328;
+            --border: rgba(255,255,255,0.07);
+            --border-hover: rgba(255,255,255,0.14);
+            --accent: #c8f35a;
+            --text-primary: #f0efea;
+            --text-secondary: #888880;
+            --text-muted: #4a4a45;
+            --bubble-out: #c8f35a;
+            --bubble-out-text: #1a1f08;
+            --bubble-in: #232328;
+            --bubble-in-text: #f0efea;
+        }
 
-     <script>
-         // Get references to the send button and chat display area
-         const sendButton = document.getElementById('send');
-         const chatDiv = document.getElementById('chat');
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-         // Function to fetch messages from the server
-         function fetchMessages() {
-             // Make a GET request to the '/messages' endpoint
-             fetch('/messages')
-                 .then(response => response.json()) // Parse the JSON response
-                 .then(data => {
-                     chatDiv.innerHTML = ''; // Clear the chat display area
-                     // Loop through each message and display it in the chat area
-                     data.forEach(msg => {
-                         chatDiv.innerHTML += `<div>${msg}</div>`; // Create a new div for each message
-                     });
-                 });
-         }
+        .app {
+            width: 100%;
+            max-width: 680px;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
 
-         // Set an interval to fetch messages every second (1000 milliseconds)
-         // This allows the chat application to continuously check for new messages without requiring the user to refresh the page.
-         setInterval(fetchMessages, 1000);
+        /* ── 닉네임 설정 오버레이 ── */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(14,14,15,0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(6px);
+        }
 
-         // Event listener for the send button click event
-         sendButton.addEventListener('click', () => {
-             // Get the message input field
-             const messageInput = document.getElementById('message');
-             const message = messageInput.value; // Get the message text
+        .overlay.hidden { display: none; }
 
-             // Make a POST request to send the message
-             fetch('/send', {
-                 method: 'POST', 
-                 headers: {
-                     'Content-Type': 'application/json' 
-                 },
-                 // Send the message as a JSON object
-                 body: JSON.stringify({ message })
-             }).then(() => {
-                 messageInput.value = ''; // Clear the input field after sending
-             });
-         });
-     </script>
- </body>
- </html>
+        .overlay-card {
+            background: var(--surface);
+            border: 1px solid var(--border-hover);
+            border-radius: 20px;
+            padding: 36px 32px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .overlay-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--text-primary);
+        }
+
+        .overlay-sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: -12px;
+            line-height: 1.5;
+        }
+
+        .overlay-input {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s;
+            width: 100%;
+        }
+
+        .overlay-input:focus { border-color: var(--border-hover); }
+
+        .overlay-btn {
+            background: var(--accent);
+            color: #1a1f08;
+            border: none;
+            border-radius: 10px;
+            padding: 11px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .overlay-btn:hover { opacity: 0.85; }
+        .overlay-error { font-size: 12px; color: #e24b4a; min-height: 16px; }
+
+        /* ── Header ── */
+        .header {
+            padding: 20px 24px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .header-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.35; }
+        }
+
+        .header-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--text-primary);
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nick-badge {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            padding: 4px 8px;
+            border: 1px solid rgba(200,243,90,0.2);
+            border-radius: 6px;
+            transition: border-color 0.15s;
+        }
+
+        .nick-badge:hover { border-color: rgba(200,243,90,0.5); }
+
+        .status-tag {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+        }
+
+        /* ── Chat ── */
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            scroll-behavior: smooth;
+        }
+
+        #chat::-webkit-scrollbar { width: 4px; }
+        #chat::-webkit-scrollbar-track { background: transparent; }
+        #chat::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 13px;
+            letter-spacing: 0.03em;
+        }
+
+        /* 날짜/시간 구분선 */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0 4px;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* 말풍선 */
+        .msg-wrapper {
+            display: flex;
+            animation: fadeUp 0.18s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(5px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-wrapper.outgoing { justify-content: flex-end; }
+        .msg-wrapper.incoming { justify-content: flex-start; }
+
+        .msg-col {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-width: 72%;
+        }
+
+        .msg-wrapper.outgoing .msg-col { align-items: flex-end; }
+        .msg-wrapper.incoming .msg-col { align-items: flex-start; }
+
+        .nick {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+            padding: 0 4px;
+        }
+
+        .bubble {
+            padding: 9px 13px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .bubble.out {
+            background: var(--bubble-out);
+            color: var(--bubble-out-text);
+            border-bottom-right-radius: 4px;
+            font-weight: 500;
+        }
+
+        .bubble.in {
+            background: var(--bubble-in);
+            color: var(--bubble-in-text);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .ts {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            padding: 0 4px;
+        }
+
+        /* ── Input ── */
+        .input-area {
+            padding: 14px 24px 20px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 10px 10px 10px 16px;
+            transition: border-color 0.15s;
+        }
+
+        .input-row:focus-within { border-color: var(--border-hover); }
+
+        #message {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            height: 22px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        #message::placeholder { color: var(--text-muted); }
+
+        #send {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        #send:hover { opacity: 0.85; }
+        #send:active { transform: scale(0.94); }
+        #send svg { width: 16px; height: 16px; fill: #1a1f08; }
+
+        .char-count {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: right;
+            margin-top: 6px;
+            padding: 0 4px;
+        }
+
+        .char-count.warn { color: #e24b4a; }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+    <div class="overlay-card">
+        <div>
+            <p class="overlay-title">닉네임 설정</p>
+            <p class="overlay-sub">채팅에서 사용할 이름을 입력하세요 (최대 20자)</p>
+        </div>
+        <input class="overlay-input" id="nickInput" type="text" placeholder="ex) 시윤" maxlength="20" autocomplete="off" />
+        <p class="overlay-error" id="nickError"></p>
+        <button class="overlay-btn" id="nickBtn">입장하기</button>
+    </div>
+</div>
+
+<div class="app">
+    <header class="header">
+        <div class="header-dot"></div>
+        <h1 class="header-title">Chat</h1>
+        <div class="header-right">
+            <span class="nick-badge" id="nickDisplay" title="클릭해서 닉네임 변경"></span>
+            <span class="status-tag" id="statusTag">LIVE</span>
+        </div>
+    </header>
+
+    <div id="chat">
+        <div class="empty-state" id="emptyState">
+            <span style="font-size:24px;opacity:0.3">✦</span>
+            <p>아직 메시지가 없습니다.</p>
+            <p>먼저 말을 걸어보세요.</p>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-row">
+            <textarea id="message" placeholder="메시지를 입력하세요..." rows="1" maxlength="500"></textarea>
+            <button id="send" title="전송">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="char-count"><span id="charCount">0</span> / 500</div>
+    </div>
+</div>
+
+<script>
+    let myUsername = null;
+    let totalFetched = 0;        // 마지막으로 받은 total 카운트 (delta polling)
+    let renderedCount = 0;       // 화면에 렌더링된 메시지 수
+
+    const overlay    = document.getElementById('overlay');
+    const nickInput  = document.getElementById('nickInput');
+    const nickBtn    = document.getElementById('nickBtn');
+    const nickError  = document.getElementById('nickError');
+    const nickDisplay= document.getElementById('nickDisplay');
+    const statusTag  = document.getElementById('statusTag');
+    const chatDiv    = document.getElementById('chat');
+    const emptyState = document.getElementById('emptyState');
+    const msgInput   = document.getElementById('message');
+    const sendBtn    = document.getElementById('send');
+    const charCount  = document.getElementById('charCount');
+
+    /* ── 닉네임 설정 ── */
+    async function setUsername() {
+        const name = nickInput.value.trim();
+        if (!name) { nickError.textContent = '닉네임을 입력해주세요.'; return; }
+
+        const res = await fetch('/set_username', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: name })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            nickError.textContent = data.error || '오류가 발생했습니다.';
+            return;
+        }
+
+        myUsername = data.username;
+        nickDisplay.textContent = myUsername;
+        overlay.classList.add('hidden');
+        msgInput.focus();
+        startPolling();
+    }
+
+    nickBtn.addEventListener('click', setUsername);
+    nickInput.addEventListener('keydown', e => { if (e.key === 'Enter') setUsername(); });
+
+    nickDisplay.addEventListener('click', () => {
+        nickInput.value = myUsername || '';
+        nickError.textContent = '';
+        overlay.classList.remove('hidden');
+        nickInput.focus();
+    });
+
+    function appendMessage(msg) {
+        const isOwn = msg.username === myUsername;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `msg-wrapper ${isOwn ? 'outgoing' : 'incoming'}`;
+
+        const col = document.createElement('div');
+        col.className = 'msg-col';
+
+        if (!isOwn) {
+            const nick = document.createElement('span');
+            nick.className = 'nick';
+            nick.textContent = msg.username;
+            col.appendChild(nick);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${isOwn ? 'out' : 'in'}`;
+        bubble.textContent = msg.text;
+        col.appendChild(bubble);
+
+        const ts = document.createElement('span');
+        ts.className = 'ts';
+        ts.textContent = msg.timestamp;
+        col.appendChild(ts);
+
+        wrapper.appendChild(col);
+        chatDiv.appendChild(wrapper);
+    }
+    async function fetchMessages() {
+        try {
+            const res = await fetch(`/messages?after=${renderedCount}`);
+            const data = await res.json();
+            statusTag.textContent = 'LIVE';
+
+            const newMsgs = data.messages;
+            if (newMsgs.length === 0) return;
+
+            if (renderedCount === 0) {
+                emptyState.style.display = 'none';
+            }
+
+            newMsgs.forEach(appendMessage);
+            renderedCount += newMsgs.length;
+
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        } catch {
+            statusTag.textContent = 'OFFLINE';
+        }
+    }
+
+    function startPolling() {
+        fetchMessages();
+        setInterval(fetchMessages, 1500);
+    }
+    async function sendMessage() {
+        const text = msgInput.value.trim();
+        if (!text || !myUsername) return;
+
+        const res = await fetch('/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            msgInput.value = '';
+            msgInput.style.height = '22px';
+            charCount.textContent = '0';
+            charCount.classList.remove('warn');
+            if (emptyState.style.display !== 'none') emptyState.style.display = 'none';
+            appendMessage(data.message);
+            renderedCount += 1;
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    msgInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    msgInput.addEventListener('input', () => {
+        msgInput.style.height = '22px';
+        msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
+        const len = msgInput.value.length;
+        charCount.textContent = len;
+        charCount.classList.toggle('warn', len >= 450);
+    });
+</script>
+</body>
+</html>
