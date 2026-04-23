@@ -349,12 +349,12 @@
 <div class="overlay" id="overlay">
     <div class="overlay-card">
         <div>
-            <p class="overlay-title">닉네임 설정</p>
-            <p class="overlay-sub">채팅에서 사용할 이름을 입력하세요 (최대 20자)</p>
+            <p class="overlay-title">Setting name</p>
+            <p class="overlay-sub">Type your name!</p>
         </div>
-        <input class="overlay-input" id="nickInput" type="text" placeholder="ex) 시윤" maxlength="20" autocomplete="off" />
+        <input class="overlay-input" id="nickInput" type="text" placeholder="ex) siyun" maxlength="20" autocomplete="off" />
         <p class="overlay-error" id="nickError"></p>
-        <button class="overlay-btn" id="nickBtn">입장하기</button>
+        <button class="overlay-btn" id="nickBtn">Enter</button>
     </div>
 </div>
 
@@ -363,7 +363,7 @@
         <div class="header-dot"></div>
         <h1 class="header-title">Chat</h1>
         <div class="header-right">
-            <span class="nick-badge" id="nickDisplay" title="클릭해서 닉네임 변경"></span>
+            <span class="nick-badge" id="nickDisplay" title="click to change name"></span>
             <span class="status-tag" id="statusTag">LIVE</span>
         </div>
     </header>
@@ -371,15 +371,15 @@
     <div id="chat">
         <div class="empty-state" id="emptyState">
             <span style="font-size:24px;opacity:0.3">✦</span>
-            <p>아직 메시지가 없습니다.</p>
-            <p>먼저 말을 걸어보세요.</p>
+            <p>There's no message yet</p>
+            <p>Say hello first!</p>
         </div>
     </div>
 
     <div class="input-area">
         <div class="input-row">
-            <textarea id="message" placeholder="메시지를 입력하세요..." rows="1" maxlength="500"></textarea>
-            <button id="send" title="전송">
+            <textarea id="message" placeholder="write your message..." rows="1" maxlength="500"></textarea>
+            <button id="send" title="send">
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
                 </svg>
@@ -409,7 +409,7 @@
     /* ── 닉네임 설정 ── */
     async function setUsername() {
         const name = nickInput.value.trim();
-        if (!name) { nickError.textContent = '닉네임을 입력해주세요.'; return; }
+        if (!name) { nickError.textContent = 'Type your name!'; return; }
 
         const res = await fetch('/set_username', {
             method: 'POST',
@@ -419,7 +419,7 @@
         const data = await res.json();
 
         if (!res.ok) {
-            nickError.textContent = data.error || '오류가 발생했습니다.';
+            nickError.textContent = data.error || 'Sorry, An error has occurred';
             return;
         }
 

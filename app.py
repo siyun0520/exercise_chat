@@ -18,13 +18,10 @@ def index():
 
 @app.route("/set_username", methods=["POST"])
 def set_username():
-    """
-    닉네임을 세션에 저장합니다.
-    클라이언트에서 최초 1회 호출하거나 닉네임 변경 시 호출합니다.
-    """
+
     data = request.get_json(silent=True)
     if not data or not data.get("username", "").strip():
-        return jsonify(success=False, error="유효하지 않은 닉네임입니다."), 400
+        return jsonify(success=False, error="Unvalid name"), 400
 
     username = str(escape(data["username"].strip()))[:20]  # XSS 방지 + 20자 제한
     session["username"] = username
@@ -33,16 +30,13 @@ def set_username():
 
 @app.route("/send", methods=["POST"])
 def send_message():
-    """
-    메시지를 전송합니다.
-    세션에 닉네임이 없으면 거부합니다.
-    """
+
     if "username" not in session:
-        return jsonify(success=False, error="닉네임을 먼저 설정해주세요."), 401
+        return jsonify(success=False, error="Set your name first"), 401
 
     data = request.get_json(silent=True)
     if not data or not data.get("message", "").strip():
-        return jsonify(success=False, error="메시지가 비어있습니다."), 400
+        return jsonify(success=False, error="You can't post an empty message"), 400
 
     text = str(escape(data["message"].strip()))[:500]  # XSS 방지 + 500자 제한
 
@@ -63,11 +57,7 @@ def send_message():
 
 @app.route("/messages", methods=["GET"])
 def get_messages():
-    """
-    저장된 전체 메시지를 반환합니다.
-    'after' 쿼리 파라미터로 인덱스를 지정하면 그 이후 메시지만 반환합니다.
-    (폴링 트래픽 절감용)
-    """
+
     after = request.args.get("after", type=int, default=0)
     sliced = messages[after:]
     return jsonify(
